@@ -31,7 +31,14 @@ export const Footer = () => (
           <p className="font-mono-tech text-sm text-zinc-300">{BUSINESS.hours}</p>
           <p className="font-mono-tech text-sm text-zinc-500 mt-1">{BUSINESS.area}</p>
         </div>
-        <div className="flex md:justify-end items-end">
+        <div className="flex flex-col md:items-end justify-end gap-2">
+          <a
+            href="/admin"
+            data-testid="footer-owner-login-link"
+            className="font-mono-tech text-[10px] tracking-[0.2em] uppercase text-zinc-600 hover:text-[#00F0FF] transition-colors duration-300"
+          >
+            Owner login
+          </a>
           <p className="font-mono-tech text-[10px] tracking-[0.2em] uppercase text-zinc-600">
             © {new Date().getFullYear()} {BUSINESS.name}
           </p>

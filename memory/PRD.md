@@ -3,43 +3,41 @@
 ## Original Problem Statement
 "Build a landing page: I want to create a full website for my computer technician side business. I want it sleek and professional."
 
-## User Choices (2026-08-28)
-- Landing page + booking/quote request form saved for review
-- Services: agent's choice fitting a computer tech business
-- Look & feel: dark, sleek, techy
-- Business details: user said they'd share; placeholders used for now (name "CircuitWorks", phone (555) 014-2273, hello@circuitworks.tech)
+## User Choices
+- (2026-08-28) Landing page + booking/quote request form saved for review; dark, sleek, techy; placeholders for business details
+- (2026-06 fork) Owner Dashboard (private login, filter, mark handled) + Email alerts on new quote + real business details (details still pending from user)
 
 ## Architecture
-- Frontend: React 19 + Tailwind, framer-motion (scroll reveals, kinetic masked-line hero), lenis (smooth scrolling), react-fast-marquee (editorial marquee), sonner toasts, axios
-- Backend: FastAPI, Motor (async MongoDB), Booking model with PyObjectId / to_mongo / from_mongo
-- DB: MongoDB via MONGO_URL / DB_NAME env vars
-- Design: "Tech Noir" — #050505 obsidian, #00F0FF neon cyan, Cabinet Grotesk / JetBrains Mono / IBM Plex Sans; sharp neo-brutalist corners, bento services grid
+- Frontend: React 19 + Tailwind, framer-motion, lenis, react-fast-marquee, sonner, axios, react-router-dom (routes: `/` landing, `/admin` owner area)
+- Backend: FastAPI, Motor (async MongoDB), bcrypt + PyJWT httpOnly-cookie auth, Emergent managed email proxy (httpx)
+- DB: MongoDB via MONGO_URL / DB_NAME
+- Design: "Tech Noir" — #050505 obsidian, #00F0FF neon cyan, Cabinet Grotesk / JetBrains Mono
 
-## Implemented (2026-08-28)
-- Fixed glassmorphic nav with mono links + Request Quote CTA, mobile menu
-- Hero: masked line-by-line kinetic reveal ("WE BRING DEAD HARDWARE BACK TO LIFE."), parallax server-lights background, stats strip
-- Slow editorial marquee (outline text, services list)
-- Manifesto: 4 numbered process chapters (Diagnostics / Surgery / Stress Test / Handover)
-- Services bento grid: General Repair, Virus Removal, Upgrades, Networking, Data Recovery with hover glow + image zoom
-- Pricing: 3 tiers ($49 diagnostic / from $99 standard / from $189 restoration), featured card glow
-- About: grayscale technician photo, trust stats
-- Booking form: POST /api/bookings (name, email, phone, device, service, preferred date, message) → saved to MongoDB, success state + toast; GET /api/bookings lists requests for review
-- Typographic footer with "LET'S FIX IT." CTA and contact details
+## Implemented
+### 2026-08-28 (MVP)
+- Landing page: nav, kinetic hero, marquee, manifesto, services bento, pricing, about, booking form, footer
+- POST /api/bookings (public) + GET /api/bookings
 
-## User Personas
-- Local customers with a broken/slow computer wanting fast, transparent repair
-- Small office owners needing networking / maintenance help
-- The owner (technician) reviewing incoming quote requests
+### 2026-06 fork (Owner Dashboard + Email Alerts)
+- JWT auth (integration playbook): POST /api/auth/login|logout|refresh, GET /api/auth/me; httpOnly secure cookies (access 15m / refresh 7d); admin seeded from backend/.env (owner@circuitworks.tech / CircuitAdmin!2026 — see memory/test_credentials.md)
+- Brute force lockout: 5 fails per ip:email → 15 min 429; keyed on X-Forwarded-For first hop (ingress-safe); TTL index cleanup
+- Protected GET /api/bookings + new PATCH /api/bookings/{id} {status: new|handled}
+- /admin frontend: Tech Noir login page + dashboard (All/New/Handled filter tabs with counts, mark handled / reopen with persistence, refresh, logout, mobile-responsive); AuthContext with 401→refresh axios interceptor; "Owner login" link in footer
+- Email alert to owner on every new booking via Emergent managed email (backend/email_service.py, guardrail gate, background task — booking always saves even if email fails). OWNER_EMAIL currently delivered@resend.dev PLACEHOLDER — awaiting user's real inbox
+- Hardening after testing round: explicit CORS origin, secure/samesite on cookie deletion, public booking rate limit (5 per 15 min per IP)
+- Testing: iteration_1 — backend 19/20 (only failure was brute-force-behind-ingress, since fixed + curl-verified 429 on public URL), frontend 100% flows incl. mobile 390px
+
+## Files
+- backend/server.py (auth + bookings + seeding), backend/email_service.py
+- frontend/src/context/AuthContext.jsx, pages/AdminPage.jsx, components/admin/{AdminLogin,AdminDashboard}.jsx
+- auth playbook tests: /app/auth_testing.md; backend tests: /app/backend/tests/backend_test.py
 
 ## Backlog
-- P0: Replace placeholder business details with real name/phone/email/location (user to provide)
-- P1: Owner view to review bookings (currently GET /api/bookings is unauthenticated — needs auth before real use)
-- P1: Email notification to owner on new booking (e.g. Resend)
-- P2: Real photos of the actual workshop/technician
-- P2: Testimonials section, FAQ, service-area map
-- P2: Online scheduling (calendar picker with time slots)
+- P0: Replace placeholder business details (name/phone/email/location) in frontend/src/lib/site-data.js AND set real OWNER_EMAIL + EMAIL_REPLY_TO in backend/.env — user must provide
+- P2: Testimonials wall, FAQ, service-area map, real workshop photos
+- P2: Online scheduling (calendar time slots)
+- P2 (design nits from testing): shadcn Select/Calendar in booking form; bump label contrast (zinc-600 → zinc-500)
 
 ## Next Tasks
-1. Collect real business details and swap placeholders in /app/frontend/src/lib/site-data.js
-2. Add auth + simple admin page for reviewing bookings
-3. Wire email notifications on new booking
+1. Collect real business details from user; swap placeholders + OWNER_EMAIL
+2. Testimonials section

@@ -1,0 +1,42 @@
+{
+  "summary": "Full backend + frontend test of CircuitWorks owner dashboard (JWT auth at /admin), booking APIs and public landing page. Backend: 20 pytest cases (19 pass / 1 fail) covering login, /auth/me, /auth/refresh, logout, brute force, booking create/list/patch, auth guards, validation and persistence. Frontend: Playwright on the preview URL covering landing render, booking submit (201 + success state), footer owner-login link, invalid login error, valid login -> dashboard, filter tabs + counts, mark handled / reopen with reload persistence, refresh button, logout + revisit /admin, plus a 390px mobile pass. Only real defect found: brute-force lockout is ineffective through the public ingress. Owner alert email confirmed in backend log (Emergent email proxy 202 Accepted, 'Booking alert email sent to owner').",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/auth/login", "issue": "Brute-force lockout does NOT trigger via the public URL. Identifier is f'{request.client.host}:{email}', and request.client.host is the ingress pod IP; the cluster has multiple ingress replicas (observed login_attempts docs for 10.79.139.10:<email> count=5 and 10.79.139.11:<email> count=1), so the counter is split and 6+ wrong passwords still return 401 instead of 429. Confirmed the logic itself works when hitting localhost:8001 directly (6th attempt = 429). Fix: key the counter on the normalised email (optionally combined with the first hop of X-Forwarded-For), not on request.client.host.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "CORS / all endpoints", "issue": "CORS_ORIGINS is '*' while allow_credentials=True and cookies are SameSite=None; Secure. Starlette reflects the caller origin, so ANY site can make credentialed calls to the protected /api/bookings endpoints (CSRF-style risk). Playbook requires explicit origins."},
+      {"endpoint": "POST /api/auth/logout", "issue": "delete_cookie() is called without secure=True/samesite='none' (mismatch with how the cookies were set). It worked in Chromium here, but should mirror the original attributes to be safe across browsers."},
+      {"endpoint": "POST /api/bookings", "issue": "Public, unauthenticated and unthrottled while it triggers an outbound owner email per call — trivially abusable for email spam. Add a simple per-IP/email rate limit."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin dashboard (mobile 390px)", "issues": ["Long service names wrap mid-word ('Data Recovery & Bac|kup') because the detail values use break-all; prefer break-words."]},
+      {"screen": "Booking form (#booking)", "issues": ["Uses native <select> for device/service and native <input type='date'> (browser default picker) instead of the shadcn Select/Calendar components — inconsistent with the rest of the Tech Noir styling.", "Field labels use zinc-600 on #0A0A0C which is below WCAG AA contrast."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Fix brute-force keying so the 5-attempt/429 lockout works behind the multi-replica ingress (use email, or X-Forwarded-For first hop, instead of request.client.host).",
+    "Set CORS_ORIGINS to the explicit preview/production origin instead of '*' since allow_credentials=True.",
+    "Pass secure=True, samesite='none', path='/' to delete_cookie in /api/auth/logout.",
+    "Add basic rate limiting to public POST /api/bookings (email-alert abuse vector)."
+  ],
+  "critical_code_review_comments": [
+    "check_brute_force/record_failed_attempt rely on request.client.host, which is a proxy IP in this deployment — the security control is effectively bypassable and also lets any client lock out the real owner for 15 min.",
+    "login_attempts documents are never expired/cleaned except on success or after lockout window — add a TTL index on last_failed_at.",
+    "AdminDashboard uses `user === null` for 'checking' and `false` for logged-out; workable but a dedicated loading flag would be clearer and avoids future null/false confusion.",
+    "Responses correctly exclude Mongo _id (response_model_by_alias=False verified) and password_hash is stripped from /auth/me — good."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py", "/app/test_reports/iteration_1.json"],
+  "success_rate": {"backend": "95% (19/20)", "frontend": "100% of tested flows"},
+  "seed_data_creation": "Created 4 TEST_ bookings via API/UI during testing; all deleted afterwards (bookings collection back to 5 pre-existing docs). login_attempts probe rows cleaned up. Real admin account untouched (invalid-login tests used throwaway emails).",
+  "should_call_test_agent_after_fix": true,
+  "should_main_agent_self_test": false,
+  "test_credentials": "owner@circuitworks.tech / CircuitAdmin!2026 (valid, works via API and UI; bcrypt hash verified as $2b$12$..., users.email unique index and login_attempts.identifier index present)",
+  "context_for_next_testing_agent": "Run `cd /app/backend && python -m pytest tests/backend_test.py -v` — everything passes except TestBruteForce::test_lockout_after_five_failures (known ingress-IP defect above; verify the fix by hitting the PUBLIC URL, not localhost, since localhost already returns 429 on the 6th attempt). All admin UI flows (login/invalid-login/filters/mark handled/reopen/reload persistence/logout) were verified green on desktop 1920 and mobile 390 and need no re-verification unless AuthContext/AdminDashboard change. Landing page + booking POST 201 + success state + footer-owner-login-link verified. Owner email alert verified in /var/log/supervisor/backend.err.log — do not spam more submissions. Remember to delete TEST_ bookings from mongo db test_database.bookings after runs.",
+  "rca_of_the_issue": "Brute-force failure RCA: the FastAPI app sits behind a Kubernetes ingress with multiple replicas. request.client.host resolves to the ingress pod IP (10.79.139.10 / 10.79.139.11 observed), so consecutive failed logins from the same external client are recorded under different identifiers, and no single counter reaches MAX_ATTEMPTS=5. Reproduction: POST /api/auth/login 6x with a wrong password against the preview URL -> all 401; the same 6 calls against http://localhost:8001 -> 6th returns 429. Mitigation: derive the identifier from the normalised email (and/or the left-most X-Forwarded-For entry) rather than request.client.host."
+}
