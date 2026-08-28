@@ -1,0 +1,145 @@
+{
+  "project_type": "landing_page",
+  "theme": "dark",
+  "design_archetype": "Electric & Neon / Swiss High-Contrast Hybrid (Tech Noir)",
+  "typography": {
+    "headings": "Cabinet Grotesk",
+    "accents": "JetBrains Mono",
+    "body": "IBM Plex Sans",
+    "scale_rules": {
+      "h1": "text-5xl md:text-6xl+ tracking-tighter uppercase font-black",
+      "h2": "text-4xl md:text-5xl tracking-tight uppercase font-bold",
+      "h3": "text-2xl md:text-3xl font-bold",
+      "body": "text-base md:text-lg text-zinc-400 font-normal leading-relaxed",
+      "mono_labels": "text-xs md:text-sm tracking-[0.2em] uppercase text-cyan-400"
+    }
+  },
+  "colors": {
+    "background": "#050505",
+    "surface_1": "#0A0A0C",
+    "surface_2": "#121214",
+    "primary": "#00F0FF",
+    "text_main": "#F4F4F5",
+    "text_muted": "#A1A1AA",
+    "border": "#27272A"
+  },
+  "visual_enhancers": [
+    "Tracing Beam Borders on Pricing Cards to indicate data/power flow",
+    "Kinetic Typography masks (reveal text line by line on scroll) in Hero",
+    "Subtle glassmorphism for fixed navigation (backdrop-blur-xl bg-black/60) with 1px border-b border-white/5",
+    "Neo-brutalist sharp edges: absolutely NO rounded-2xl or 3xl. Use rounded-none or rounded-sm."
+  ],
+  "layout_and_grids": {
+    "general": "Massive generous spacing. Sections separated by py-32 or py-48.",
+    "services_bento": "Tetris Mode A: 12-column grid. Service cards spanning 4, 8, or full columns to create asymmetry.",
+    "manifesto_list": "Brutalist block-level list. Huge JetBrains Mono numerals (e.g., 01, 02) aligned left, text pushed to the right. Use border-b border-white/10 to separate."
+  },
+  "sections": [
+    {
+      "name": "Navigation",
+      "details": "Fixed glassmorphic top nav. Logo in Cabinet Grotesk, Links in JetBrains Mono. 'REQUEST QUOTE' button in neon cyan with sharp corners."
+    },
+    {
+      "name": "Hero",
+      "details": "Kinetic text reveal (Framer Motion). Headline: 'WE BRING DEAD HARDWARE BACK TO LIFE.' Subtitle in JetBrains Mono. Dark imagery behind a bg-black/50 overlay."
+    },
+    {
+      "name": "Editorial Marquee",
+      "details": "Massive Outline Text (text-8xl, font-black, text-transparent, border/stroke white/20). Moving extremely slowly: 'LOGIC BOARD REPAIR + DATA RECOVERY + THERMAL PASTE RENEWAL + VIRUS ERADICATION'."
+    },
+    {
+      "name": "Manifesto (Process)",
+      "details": "Numbered list of chapters. '01 Diagnostics', '02 Surgery', '03 Stress Test'. Huge numbers, stark dividing lines."
+    },
+    {
+      "name": "Services Grid",
+      "details": "Bento Grid layout (Tetris Mode A). Hovering over a card triggers a subtle blue glow (box-shadow) and image scale inside. Categories: General Repair, Virus Removal, Upgrades, Networking, Data Recovery."
+    },
+    {
+      "name": "Pricing",
+      "details": "Minimalist technical cards. Focus on transparent pricing. No heavy gradients, just 1px borders."
+    },
+    {
+      "name": "About",
+      "details": "Grayscale photography of technician typing. Emphasize trust, speed, and precision."
+    },
+    {
+      "name": "Booking / Quote Form",
+      "details": "Shadcn UI forms customized for dark tech. Sharp input borders, neon cyan focus rings (focus:ring-[#00F0FF])."
+    },
+    {
+      "name": "Footer",
+      "details": "Massive typographic footer. 'LET'S FIX IT' at text-[10vw] filling the container."
+    }
+  ],
+  "image_urls": [
+    {
+      "category": "Hero / Abstract Background",
+      "url": "https://images.unsplash.com/photo-1561076634-521942b94092?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTN8MHwxfHNlYXJjaHwzfHxzZXJ2ZXIlMjBsaWdodHMlMjBkYXJrfGVufDB8fHx8MTc4Nzg4NDkyNXww&ixlib=rb-4.1.0&q=85",
+      "description": "Blurry blue server lights, extremely moody and tech-focused."
+    },
+    {
+      "category": "About / Technician",
+      "url": "https://images.unsplash.com/photo-1594398985750-3b54ec074a0a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNDR8MHwxfHNlYXJjaHwyfHxjb21wdXRlciUyMHJlcGFpciUyMHRlY2huaWNpYW4lMjBkYXJrfGVufDB8fHx8MTc4Nzg4NDkyNHww&ixlib=rb-4.1.0&q=85",
+      "description": "Grayscale moody photo of hands typing on a laptop, professional and technical."
+    },
+    {
+      "category": "Services / Product Photography",
+      "url": "https://images.unsplash.com/photo-1675410202405-5ef270c857d3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNDR8MHwxfHNlYXJjaHwzfHxjb21wdXRlciUyMHJlcGFpciUyMHRlY2huaWNpYW4lMjBkYXJrfGVufDB8fHx8MTc4Nzg4NDkyNHww&ixlib=rb-4.1.0&q=85",
+      "description": "Dark gaming/custom rig with glowing teal ring lights."
+    },
+    {
+      "category": "Services / Hardware Macro",
+      "url": "https://images.unsplash.com/photo-1787181875853-e8158cebaed8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwyfHxjaXJjdWl0JTIwYm9hcmQlMjBtYWNybyUyMGRhcmt8ZW58MHx8fHwxNzg3ODg0OTI0fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Macro view of copper circuits, organic and technical."
+    }
+  ],
+  "motion_and_interactions": {
+    "scroll": "Lenis for buttery smooth momentum scrolling. Mandatory.",
+    "kinetic_text": "Framer Motion line-by-line reveal using overflow-hidden on wrappers, translating Y from 100% to 0%.",
+    "bento_hover": "Subtle scale (1.02) and translation, border color shift from border-white/5 to border-white/20, plus a faint Neon Cyan drop-shadow."
+  },
+  "accessibility": {
+    "focus_states": "All interactive elements must have clear focus rings, e.g., focus:ring-2 focus:ring-[#00F0FF].",
+    "color_contrast": "Ensure white text on `#050505` background meets APCA standards. Overlay images heavily with `bg-black/60` to preserve text readability."
+  },
+  "technical_requirements": {
+    "libraries": [
+      "framer-motion",
+      "lucide-react",
+      "@studio-freight/react-lenis",
+      "react-fast-marquee",
+      "clsx",
+      "tailwind-merge"
+    ],
+    "shadcn_components": [
+      "form",
+      "input",
+      "textarea",
+      "button"
+    ],
+    "file_type": "JS",
+    "note": "Use standard .js and .jsx extensions. Do NOT generate TypeScript (.ts/.tsx) files."
+  },
+  "instructions_to_main_agent": [
+    "Do NOT use `Inter`, `Roboto`, or generic fonts. Use Cabinet Grotesk for Headings and JetBrains Mono for data/numbers.",
+    "Implement the background purely as black `#050505`, without muddy gradients.",
+    "The hero section MUST use a text masking technique (framer-motion) to reveal the title line-by-line as the user enters the page.",
+    "Ensure all buttons are sharp or barely rounded (rounded-sm maximum) to match the Brutalist Tech look.",
+    "Use standard Tailwind grid utilities for the bento layout. Ensure children are direct descendants to prevent breaking grid behavior.",
+    "Images MUST have heavy overlays (e.g. `bg-black/40` or `bg-black/60`) to sit behind text without ruining contrast.",
+    "The Manifesto section should have a massive JetBrains Mono number on the left (e.g. '01') and the description on the right.",
+    "Ensure the booking form uses Shadcn components but heavily modified with Tailwind classes to match the neon tech aesthetic (e.g., focus:ring-[#00F0FF]).",
+    "Ensure ALL interactive elements and key informative elements have a `data-testid` attribute in kebab-case.",
+    "You have .js files not .tsx file, so write JavaScript React components without TypeScript types."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Never use generic centered layouts. Asymmetry creates tension and interest.",
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "Do not center align the app container (.App { text-align: center; } is FORBIDDEN).",
+    "Every interaction needs micro-animations - hover states, transitions. Exclude transform from `transition-all`.",
+    "Use 2-3x more spacing than typical. p-8, p-12, py-32 are your friends.",
+    "Never use placeholder URLs for images. Only use the ones provided in `image_urls`.",
+    "No emojis for icons. Use the provided icon library (Lucide React)."
+  ]
+}
