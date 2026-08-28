@@ -19,26 +19,70 @@ const INITIAL = {
   device_type: "Laptop",
   service: "General Repair",
   preferred_date: "",
+  time_slot: "",
   message: "",
 };
 
+const slotBtnCls = (selected, available) =>
+  `font-mono-tech text-[11px] tracking-[0.15em] uppercase px-5 py-3 rounded-sm border transition-colors duration-300 ${
+    !available
+      ? "border-white/5 text-zinc-700 line-through cursor-not-allowed"
+      : selected
+      ? "border-[#00F0FF] text-[#00F0FF] bg-[#00F0FF]/10"
+      : "border-white/15 text-zinc-300 hover:border-[#00F0FF] hover:text-[#00F0FF]"
+  }`;
+
 export const BookingForm = () => {
   const [form, setForm] = useState(INITIAL);
+  const [slots, setSlots] = useState(null);
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
 
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
 
+  const fetchSlots = async (date) => {
+    if (!date) {
+      setSlots(null);
+      return;
+    }
+    try {
+      const { data } = await axios.get(`${API}/availability`, { params: { date } });
+      setSlots(data.slots);
+    } catch {
+      setSlots([]);
+    }
+  };
+
+  const onDateChange = (e) => {
+    const date = e.target.value;
+    setForm((f) => ({ ...f, preferred_date: date, time_slot: "" }));
+    fetchSlots(date);
+  };
+
+  const pickSlot = (slot) =>
+    setForm((f) => ({ ...f, time_slot: f.time_slot === slot ? "" : slot }));
+
   const submit = async (e) => {
     e.preventDefault();
     setSending(true);
     try {
-      await axios.post(`${API}/bookings`, form);
+      await axios.post(`${API}/bookings`, {
+        ...form,
+        preferred_date: form.preferred_date || null,
+        time_slot: form.time_slot || null,
+      });
       setDone(true);
       setForm(INITIAL);
+      setSlots(null);
       toast.success("Request received — I'll get back to you within one business day.");
     } catch (err) {
-      toast.error("Something went wrong sending your request. Please try again or call directly.");
+      if (err.response?.status === 409) {
+        toast.error(err.response.data.detail);
+        fetchSlots(form.preferred_date);
+        setForm((f) => ({ ...f, time_slot: "" }));
+      } else {
+        toast.error("Something went wrong sending your request. Please try again or call directly.");
+      }
     } finally {
       setSending(false);
     }
@@ -111,7 +155,15 @@ export const BookingForm = () => {
                     </div>
                     <div>
                       <label className={labelCls} htmlFor="bk-date">Preferred date</label>
-                      <input id="bk-date" data-testid="booking-date-input" type="date" value={form.preferred_date} onChange={set("preferred_date")} className={inputCls} />
+                      <input
+                        id="bk-date"
+                        data-testid="booking-date-input"
+                        type="date"
+                        min={new Date().toLocaleDateString("en-CA")}
+                        value={form.preferred_date}
+                        onChange={onDateChange}
+                        className={inputCls}
+                      />
                     </div>
                     <div>
                       <label className={labelCls} htmlFor="bk-device">Device *</label>
@@ -131,6 +183,35 @@ export const BookingForm = () => {
                       </select>
                     </div>
                   </div>
+                  {form.preferred_date && (
+                    <div className="mb-8" data-testid="booking-slot-picker">
+                      <label className={labelCls}>Appointment slot — 2 hrs, I come to you (optional)</label>
+                      {slots === null ? (
+                        <p className="font-mono-tech text-xs text-zinc-500 flex items-center gap-2">
+                          <Loader2 size={12} className="animate-spin" /> Checking availability…
+                        </p>
+                      ) : slots.length > 0 && slots.every((s) => !s.available) ? (
+                        <p className="font-mono-tech text-xs text-zinc-500" data-testid="booking-no-slots">
+                          No slots left on this day — pick another date, or send without a slot and I'll reach out.
+                        </p>
+                      ) : (
+                        <div className="flex flex-wrap gap-3">
+                          {slots.map((s) => (
+                            <button
+                              key={s.slot}
+                              type="button"
+                              data-testid={`booking-slot-${s.slot}`}
+                              disabled={!s.available}
+                              onClick={() => pickSlot(s.slot)}
+                              className={slotBtnCls(form.time_slot === s.slot, s.available)}
+                            >
+                              {s.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="mb-8">
                     <label className={labelCls} htmlFor="bk-message">What's happening? *</label>
                     <textarea

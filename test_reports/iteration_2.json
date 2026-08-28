@@ -1,0 +1,44 @@
+{
+  "summary": "Iteration 2 — full retest of CircuitWorks after the scheduling/3-status/email session. Backend: rewrote /app/backend/tests/backend_test.py as 35 pytest cases (34 passed, 1 skipped) covering health, auth (login/cookies/bcrypt format/me/refresh/logout), brute-force lockout (now PASSES via public URL after the X-Forwarded-For fix), bookings CRUD + rate limit 429, /api/availability (public, labels, past dates, 400 invalid format, 422 missing param), /api/blocked-days (401 unauth, block/unblock round-trip, idempotent upsert, 422 bad format, slot booking on blocked day = 409), slot booking + drive buffer (10:00 booked -> 10:00 & 12:00 unavailable, 14:00 free; 409 on taken and on buffered slot; 400 slot-without-date; 400 invalid slot; past-date slot 409; handled booking releases the slot), and status emails. Frontend (Playwright on the preview URL, desktop 1920 + mobile 390): landing real details (905-512-0595, Cole Dunlop, 'Mobile service — Edmundston <-> Grand Falls, NB', 'Appointments · 10:00-17:00'), date picker -> 3 slot chips with correct labels, chip select styling, submit 201 + success state, booked+buffered chips disabled with line-through on refetch, stale-slot 409 -> error toast + slot refetch + no false success, admin login, availability grid block/unblock with public 'No slots left' round-trip, 4 status filter tabs with correct counts (All 6 = New 5 + Accepted 0 + Handled 1), Accept -> Accepted (Mark handled + Back to new), Mark handled -> reload persistence -> Reopen only, logout back to login form. App-level CORS verified explicit-origin + credentials on localhost:8001 (public preflight is answered by the ingress with '*', outside app control). No blocking defects found; remaining findings are edge cases and one mobile layout overflow.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "outbound email (email_service.send_email)", "issue": "Emergent email provider started returning 429 Too Many Requests after ~19 sends in this run (every public booking fires an owner alert). Failures are only logged — no retry/queue/backoff — so an owner alert or customer accepted/handled email can be silently lost. Earlier log lines (03:25) confirm accepted/handled emails DO send when quota is available; the pytest email case self-skips when a provider 429 is detected."},
+      {"endpoint": "GET /api/availability, POST /api/bookings", "issue": "Timezone mismatch: backend 'past' check uses datetime.now(timezone.utc).date() while the form's min= uses the browser's LOCAL date (en-CA). Between 00:00-04:00 UTC an Atlantic-Canada visitor's local 'today' is UTC-yesterday, so the date input allows it but availability returns all slots unavailable ('No slots left') with no explanation."},
+      {"endpoint": "POST /api/bookings", "issue": "Same-day slots that have already passed are still bookable — at 16:00 local a customer can still book today's 10:00-12:00 slot. compute_availability only checks day < today, never the slot start time."},
+      {"endpoint": "POST /api/bookings", "issue": "Slot booking has a check-then-insert race with no unique index on (preferred_date, time_slot): two concurrent requests for the same slot can both pass compute_availability and double-book. Add a partial unique index or an atomic reservation."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Accept / Mark handled toast", "issue": "Toast asserts 'Accepted — confirmation email sent to the customer.' unconditionally; the PATCH response carries no email result, so the owner is told an email was sent even when the provider 429s and it was not (observed during this run).", "affected_selectors": ["[data-sonner-toast]", "booking-accept-{id}", "booking-mark-handled-{id}"]}
+    ],
+    "design_issues": [
+      {"screen": "Landing page @390px (mobile)", "issues": ["Horizontal page overflow: document.scrollWidth = 552 vs clientWidth = 390. Offender is the react-fast-marquee wrapper (.rfm-marquee, right edge 3637px) which is not clipped — add overflow-hidden/max-w-full on the Marquee container. Every section then scrolls sideways (form fields and slot chips sit partly off-screen at scrollLeft>0)."]},
+      {"screen": "Booking form (#booking)", "issues": ["Still uses the browser-default <input type=\"date\"> picker and native <select>s instead of the shadcn Calendar/Select (carried over from iteration 1).", "Field labels use zinc-500/600 on #0A0A0C — below WCAG AA contrast.", "Hero stat values on mobile ('500+', '90-day', '48h') render very dim over the background image — low contrast."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Fix mobile horizontal overflow caused by the marquee wrapper (overflow-x hidden) — affects the whole landing page at 390px.",
+    "Make status toasts honest about email delivery (or return an email_sent flag / retry the send) since provider 429s are silently swallowed.",
+    "Align the 'past day' rule with the visitor's timezone (or send the client date/offset) so local-today is never reported as fully unavailable; also exclude already-passed slots for the current day.",
+    "Add a unique index on (preferred_date, time_slot) for active bookings to close the double-booking race."
+  ],
+  "critical_code_review_comments": [
+    "compute_availability filters bookings on status in ['new','accepted'] — marking a booking 'handled' immediately frees its slot (verified). Confirm this is intended: a completed job on a past/current day now shows as bookable again.",
+    "create_booking allows a slot-less booking on a fully blocked day (returns 201). Verified as reasonable, but the UI copy should keep making that explicit.",
+    "Every public POST /api/bookings triggers an outbound email with no dedupe; combined with the provider quota this is the main fragility of the notification path.",
+    "server.py is still a single 385-line module mixing auth, scheduling and bookings — split into routers before it grows further.",
+    "Responses correctly exclude Mongo _id, password_hash is stripped, admin bcrypt hash verified as $2b$, blocked-day upsert is idempotent (no duplicate docs)."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py", "/app/test_reports/iteration_2.json"],
+  "success_rate": {"backend": "100% of executed assertions (34 passed, 1 skipped due to email-provider 429)", "frontend": "100% of tested flows (1 mobile layout defect)"},
+  "seed_data_creation": "Created ~12 TEST_ bookings (API + UI, emails delivered@resend.dev / *.example.test) and 4 temporary blocked_days; all deleted afterwards. bookings collection back to the 4 pre-existing docs, blocked_days empty, booking_rate and throwaway login_attempts cleared.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "owner@circuitworks.tech / CircuitAdmin!2026 — valid via API and /admin UI; bcrypt $2b$ hash, httpOnly cookies set, brute-force 429 now fires on the 6th failure through the public URL.",
+  "context_for_next_testing_agent": "Run `cd /app/backend && python -m pytest tests/backend_test.py -v` (35 cases; TestStatusEmails self-skips when the Emergent email proxy is 429-throttled — check /var/log/supervisor/backend.err.log for \"Status 'accepted'|'handled' email sent\" to verify delivery once quota resets). Helper post_booking() clears db.booking_rate before every POST so the 5/15min IP limit never trips; the dedicated test_booking_rate_limit_429 case exercises the limiter deliberately. All slot/buffer/blocked-day/409 backend behaviour and all admin + public UI flows were verified green this iteration; only re-verify after changes to BookingForm.jsx, AvailabilityPanel.jsx or compute_availability. Remaining open items: mobile marquee overflow, email-send honesty in toasts, timezone/past-slot edges, slot race index.",
+  "rca_of_the_issue": "Mobile overflow RCA: the react-fast-marquee root (.rfm-marquee) renders a 3637px-wide track; its parent has no overflow-hidden/max-w-full, so documentElement.scrollWidth becomes 552px at a 390px viewport and the entire page can be panned horizontally, pushing form inputs and slot chips off-screen. Email RCA: send_email raises httpx 429 from integrations.emergentagent.com after roughly 19 sends in a short window; send_new_booking_alert/send_status_email catch and log only, so the notification is dropped while the UI still reports success."
+}

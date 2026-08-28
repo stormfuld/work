@@ -1,5 +1,6 @@
 import os
 import re
+import asyncio
 import ipaddress
 import logging
 import httpx
@@ -94,20 +95,31 @@ async def send_email(*, to: str, subject: str, html: str) -> str | None:
     payload = {"to": [to], "subject": subject, "html": html, "from_name": EMAIL_FROM_NAME}
     if EMAIL_REPLY_TO:
         payload["contact_email"] = EMAIL_REPLY_TO
-    async with httpx.AsyncClient(timeout=30) as client:
-        resp = await client.post(
-            f"{EMAIL_BASE_URL}/api/v1/email/send",
-            headers={"X-Email-Key": EMAIL_KEY},
-            json=payload,
-        )
-    resp.raise_for_status()
-    return resp.json().get("id")
+    for attempt in range(3):
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                f"{EMAIL_BASE_URL}/api/v1/email/send",
+                headers={"X-Email-Key": EMAIL_KEY},
+                json=payload,
+            )
+        if resp.status_code == 429 and attempt < 2:
+            await asyncio.sleep(2 * (attempt + 1))
+            continue
+        resp.raise_for_status()
+        return resp.json().get("id")
 
 
 def _row(label: str, value: str) -> str:
     return (f'<tr><td style="padding:8px 12px;font-family:monospace;font-size:11px;'
             f'text-transform:uppercase;letter-spacing:1px;color:#888;width:140px">{escape(label)}</td>'
             f'<td style="padding:8px 12px;font-family:Arial,sans-serif;font-size:14px;color:#111">{escape(value)}</td></tr>')
+
+
+def _appointment_str(booking: dict) -> str:
+    if booking.get("preferred_date") and booking.get("time_slot"):
+        slot = booking["time_slot"]
+        return f"{booking['preferred_date']}, {slot}–{int(slot[:2]) + 2}:00"
+    return booking.get("preferred_date") or ""
 
 
 async def send_new_booking_alert(booking: dict) -> None:
@@ -120,7 +132,7 @@ async def send_new_booking_alert(booking: dict) -> None:
             _row("Phone", booking.get("phone", "") or "—"),
             _row("Device", booking.get("device_type", "")),
             _row("Service", booking.get("service", "")),
-            _row("Preferred date", booking.get("preferred_date") or "—"),
+            _row("Appointment", _appointment_str(booking) or "—"),
             _row("Message", booking.get("message", "") or "—"),
         ])
         html = (f'<table role="presentation" width="100%" style="max-width:600px;border-collapse:collapse">'
@@ -135,3 +147,35 @@ async def send_new_booking_alert(booking: dict) -> None:
         logger.info(f"Booking alert email sent to owner (id={email_id})")
     except Exception as e:
         logger.error(f"Booking alert email failed (booking still saved): {e}")
+
+
+async def send_status_email(booking: dict, status: str) -> bool:
+    """Customer notification on accept/handled. Returns True if sent, never raises."""
+    try:
+        name = booking.get("name", "there")
+        service = booking.get("service", "repair")
+        appt = _appointment_str(booking)
+        if status == "accepted":
+            subject = f"Your {service} request is confirmed — {EMAIL_FROM_NAME}"
+            intro = f"<p>Hi {escape(name)}, good news — your {escape(service)} request has been accepted.</p>"
+            if booking.get("time_slot"):
+                detail = (f"<p>Your appointment: <strong>{escape(appt)}</strong>. "
+                          f"This is a mobile service — I come to you, no drop-off needed.</p>")
+            else:
+                detail = "<p>I'll be in touch shortly to arrange a time that works for you.</p>"
+        else:
+            subject = f"Your {service} request is complete — {EMAIL_FROM_NAME}"
+            intro = f"<p>Hi {escape(name)}, your {escape(service)} request has been marked as handled.</p>"
+            detail = "<p>Thanks for choosing us. If anything else comes up, just reply to this email or give me a call.</p>"
+        html = (f'<table role="presentation" width="100%" style="max-width:600px;border-collapse:collapse">'
+                f'<tr><td style="padding:24px 12px;font-family:Arial,sans-serif;font-size:14px;color:#111">'
+                f'{intro}{detail}'
+                f'<p style="font-size:12px;color:#888;margin-top:24px">Sent by {escape(EMAIL_FROM_NAME)}. '
+                f'We never ask for your password or card details by email.</p>'
+                f'</td></tr></table>')
+        email_id = await send_email(to=booking["email"], subject=subject, html=html)
+        logger.info(f"Status '{status}' email sent to customer (id={email_id})")
+        return True
+    except Exception as e:
+        logger.error(f"Status email failed (status change still saved): {e}")
+        return False

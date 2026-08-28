@@ -36,6 +36,7 @@
     }
     html {
         scroll-behavior: auto;
+        overflow-x: hidden;
     }
     body {
         @apply bg-background text-foreground;
@@ -43,6 +44,7 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         background-color: #050505;
+        overflow-x: hidden;
     }
     ::selection {
         background: #00F0FF;

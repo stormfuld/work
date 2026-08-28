@@ -25,7 +25,7 @@ export const Hero = () => {
       <motion.div style={{ opacity: fade }} className="relative z-10 max-w-7xl mx-auto w-full px-6 md:px-10 pb-16 md:pb-24 pt-40">
         <MaskedLine delay={0.4}>
           <p className="font-mono-tech text-xs md:text-sm tracking-[0.3em] uppercase text-[#00F0FF] mb-8 flex items-center gap-3" data-testid="hero-kicker">
-            <Cpu size={16} /> Independent computer technician — on-site &amp; remote
+            <Cpu size={16} /> Independent computer technician — mobile, I come to you
           </p>
         </MaskedLine>
 
@@ -79,7 +79,7 @@ export const Hero = () => {
             ["500+", "Devices revived"],
             ["48h", "Avg. turnaround"],
             ["90-day", "Repair warranty"],
-            [BUSINESS.hours, "Workshop hours"],
+            [BUSINESS.hours, "Booking hours"],
           ].map(([stat, label]) => (
             <div key={label}>
               <p className="font-mono-tech text-lg md:text-xl text-zinc-100 font-bold">{stat}</p>

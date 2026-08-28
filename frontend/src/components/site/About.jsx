@@ -17,7 +17,7 @@ export const About = () => (
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
               <div className="absolute bottom-6 left-6">
-                <p className="font-mono-tech text-[10px] tracking-[0.2em] uppercase text-[#00F0FF]">Bench 01 — Est. 2019</p>
+                <p className="font-mono-tech text-[10px] tracking-[0.2em] uppercase text-[#00F0FF]">Cole Dunlop — Mobile Unit 01</p>
               </div>
             </div>
           </Reveal>
@@ -31,16 +31,16 @@ export const About = () => (
           </Reveal>
           <Reveal delay={0.1}>
             <p className="text-zinc-400 text-base md:text-lg leading-relaxed mb-6" data-testid="about-body-1">
-              This is a one-person workshop, and that's the point. The person who
-              diagnoses your machine is the person who repairs it — and the person
-              who answers the phone when you call back.
+              This is a one-person operation, and that's the point. Cole Dunlop —
+              the person who diagnoses your machine — is the person who repairs it,
+              and the person who answers the phone when you call back.
             </p>
           </Reveal>
           <Reveal delay={0.2}>
             <p className="text-zinc-400 text-base md:text-lg leading-relaxed mb-12" data-testid="about-body-2">
-              Evenings and weekends by design: drop your machine off after work,
-              get it back before the weekend. Every repair is documented,
-              photographed and covered by a written warranty.
+              Fully mobile by design: no shop, no drop-off. I drive to you anywhere
+              between Edmundston and Grand Falls, fix it where it lives, and every
+              repair is documented and covered by a written warranty.
             </p>
           </Reveal>
           <Reveal delay={0.3}>

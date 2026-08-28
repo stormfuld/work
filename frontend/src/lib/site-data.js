@@ -1,10 +1,11 @@
 export const BUSINESS = {
   name: "CircuitWorks",
-  tagline: "Computer Repair & IT Services",
-  phone: "(555) 014-2273",
+  tagline: "Mobile Computer Repair & IT Services",
+  owner: "Cole Dunlop",
+  phone: "905-512-0595",
   email: "hello@circuitworks.tech",
-  hours: "Mon–Sat · 9:00–19:00",
-  area: "On-site & remote · Greater metro area",
+  hours: "Appointments · 10:00–17:00",
+  area: "Mobile service — Edmundston ↔ Grand Falls, NB",
 };
 
 export const IMAGES = {

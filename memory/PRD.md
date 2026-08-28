@@ -27,17 +27,24 @@
 - Hardening after testing round: explicit CORS origin, secure/samesite on cookie deletion, public booking rate limit (5 per 15 min per IP)
 - Testing: iteration_1 — backend 19/20 (only failure was brute-force-behind-ingress, since fixed + curl-verified 429 on public URL), frontend 100% flows incl. mobile 390px
 
+### 2026-06 fork pt.2 (Scheduling + Statuses + Real Details)
+- Real details: phone 905-512-0595, "Mobile service — Edmundston ↔ Grand Falls, NB", Cole Dunlop in About, mobile-service copy (no shop, drives to customers). Brand stays "CircuitWorks" placeholder + placeholder email by user's choice
+- Online scheduling: 2-hour slots (10–12 / 12–14 / 14–16, Atlantic tz America/Moncton), booked slot + next slot (drive buffer) auto-unavailable, past days & passed same-day slots excluded; GET /api/availability?date= (public); slot chips in quote form with 409 conflict handling; DB unique partial index `unique_active_slot` closes double-booking race
+- Admin availability panel (/admin → Availability tab): 28-day grid, tap to block/unblock days (GET/POST/DELETE /api/blocked-days, auth); blocked days show no slots publicly
+- 3 statuses New→Accepted→Handled; customer emails on Accept ("confirmed, I come to you" + appointment) and Handled ("complete"); PATCH returns email_sent flag → honest toasts (warns if provider throttled); email send has 429 retry (3 attempts); repeated PATCH to same status doesn't resend
+- Fixed: mobile horizontal overflow (marquee), overflow-x hidden on html/body
+- Testing: iteration_2 — backend 34/35 pass (1 skip: provider throttle), frontend 100% flows; all 4 action items fixed + self-verified (curl + 390px screenshot)
+
 ## Files
-- backend/server.py (auth + bookings + seeding), backend/email_service.py
-- frontend/src/context/AuthContext.jsx, pages/AdminPage.jsx, components/admin/{AdminLogin,AdminDashboard}.jsx
+- backend/server.py (auth + scheduling + bookings + seeding), backend/email_service.py (owner alert + status emails + guardrail gate)
+- frontend/src/context/AuthContext.jsx, pages/AdminPage.jsx, components/admin/{AdminLogin,AdminDashboard,BookingCard,AvailabilityPanel}.jsx
 - auth playbook tests: /app/auth_testing.md; backend tests: /app/backend/tests/backend_test.py
 
 ## Backlog
-- P0: Replace placeholder business details (name/phone/email/location) in frontend/src/lib/site-data.js AND set real OWNER_EMAIL + EMAIL_REPLY_TO in backend/.env — user must provide
-- P2: Testimonials wall, FAQ, service-area map, real workshop photos
-- P2: Online scheduling (calendar time slots)
-- P2 (design nits from testing): shadcn Select/Calendar in booking form; bump label contrast (zinc-600 → zinc-500)
+- P0: Business name + business email pending from user → then swap brand in site-data.js and OWNER_EMAIL/EMAIL_REPLY_TO in backend/.env (alerts currently go to delivered@resend.dev test inbox by user's choice)
+- P2: Testimonials wall, FAQ, service-area map, real photos
+- P2 (design nits from testing): shadcn Select/Calendar in booking form; label + hero-stat contrast bump
 
 ## Next Tasks
-1. Collect real business details from user; swap placeholders + OWNER_EMAIL
+1. Get business name + email from user; swap placeholders + OWNER_EMAIL
 2. Testimonials section
