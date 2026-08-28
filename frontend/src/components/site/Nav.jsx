@@ -8,6 +8,7 @@ const LINKS = [
   { label: "Services", href: "#services", testId: "nav-link-services" },
   { label: "Pricing", href: "#pricing", testId: "nav-link-pricing" },
   { label: "About", href: "#about", testId: "nav-link-about" },
+  { label: "Coverage", href: "#coverage", testId: "nav-link-coverage" },
 ];
 
 const scrollTo = (href) => {

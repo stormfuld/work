@@ -10,6 +10,7 @@ import { Manifesto } from "@/components/site/Manifesto";
 import { Services } from "@/components/site/Services";
 import { Pricing } from "@/components/site/Pricing";
 import { About } from "@/components/site/About";
+import { ServiceArea } from "@/components/site/ServiceArea";
 import { BookingForm } from "@/components/site/BookingForm";
 import { Footer } from "@/components/site/Footer";
 import AdminPage from "@/pages/AdminPage";
@@ -25,6 +26,7 @@ const Landing = () => (
         <Services />
         <Pricing />
         <About />
+        <ServiceArea />
         <BookingForm />
       </main>
       <Footer />

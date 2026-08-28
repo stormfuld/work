@@ -35,6 +35,12 @@
 - Fixed: mobile horizontal overflow (marquee), overflow-x hidden on html/body
 - Testing: iteration_2 — backend 34/35 pass (1 skip: provider throttle), frontend 100% flows; all 4 action items fixed + self-verified (curl + 390px screenshot)
 
+### 2026-06 fork pt.3 (Coverage Checker)
+- "Am I in your area?" section (id #coverage, nav link "Coverage", between About and Booking; booking renumbered 06): telecom-style postal code checker
+- GET /api/service-area?postal_code= (public): validates CA postal format, geocodes FSA via api.zippopotam.us/CA/{fsa} (cached in db.fsa_cache), computes distance to Edmundston(47.3614,-68.3218)–Grand Falls(47.052,-67.7368) corridor segment; in_area = ≤20 km (SERVICE_RADIUS_KM in server.py)
+- In-area → cyan "You're covered" + quote CTA; out-of-area → amber "Outside my usual run" + call/text 905-512-0595 link + "send a request anyway" (never blocks); 400 invalid format, 404 unknown FSA, 503 lookup down
+- Self-tested: curl all cases (Edmundston 0km, Saint-Basile 3.8km in, Moncton 253km out, Toronto out, invalid, unknown) + screenshots of both result states
+
 ## Files
 - backend/server.py (auth + scheduling + bookings + seeding), backend/email_service.py (owner alert + status emails + guardrail gate)
 - frontend/src/context/AuthContext.jsx, pages/AdminPage.jsx, components/admin/{AdminLogin,AdminDashboard,BookingCard,AvailabilityPanel}.jsx

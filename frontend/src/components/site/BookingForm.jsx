@@ -91,7 +91,7 @@ export const BookingForm = () => {
   return (
     <section id="booking" className="py-32 md:py-48" data-testid="booking-section">
       <div className="max-w-7xl mx-auto px-6 md:px-10">
-        <SectionLabel index="05" title="Request a Quote" testId="booking-label" />
+        <SectionLabel index="06" title="Request a Quote" testId="booking-label" />
 
         <div className="grid grid-cols-12 gap-12">
           <div className="col-span-12 md:col-span-5">

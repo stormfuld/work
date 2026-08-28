@@ -8,9 +8,12 @@ from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Backgr
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import re
+import math
 import logging
 import bcrypt
 import jwt
+import httpx
 from pydantic import BaseModel, Field, ConfigDict, BeforeValidator
 from typing import List, Optional, Annotated
 from bson import ObjectId
@@ -300,6 +303,53 @@ async def add_blocked_day(input: BlockedDayInput, user: dict = Depends(get_curre
 async def remove_blocked_day(date: str, user: dict = Depends(get_current_user)):
     await db.blocked_days.delete_one({"date": date})
     return {"message": "unblocked"}
+
+
+# ---------- Service area ----------
+
+CORRIDOR_A = (47.3614, -68.3218)  # Edmundston
+CORRIDOR_B = (47.0520, -67.7368)  # Grand Falls
+SERVICE_RADIUS_KM = 20
+
+
+def _corridor_distance_km(lat: float, lng: float) -> float:
+    ref = math.radians((CORRIDOR_A[0] + CORRIDOR_B[0]) / 2)
+
+    def xy(point):
+        return (point[1] * 111.320 * math.cos(ref), point[0] * 110.574)
+
+    ax, ay = xy(CORRIDOR_A)
+    bx, by = xy(CORRIDOR_B)
+    px, py = xy((lat, lng))
+    dx, dy = bx - ax, by - ay
+    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+    return math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+
+
+@api_router.get("/service-area")
+async def service_area(postal_code: str):
+    pc = postal_code.strip().upper().replace(" ", "")
+    if not re.fullmatch(r"[A-Z]\d[A-Z](\d[A-Z]\d)?", pc):
+        raise HTTPException(status_code=400, detail="Enter a valid Canadian postal code (e.g. E3V 1A1).")
+    fsa = pc[:3]
+    cached = await db.fsa_cache.find_one({"fsa": fsa})
+    if cached:
+        lat, lng, place = cached["lat"], cached["lng"], cached["place"]
+    else:
+        try:
+            async with httpx.AsyncClient(timeout=10) as c:
+                r = await c.get(f"https://api.zippopotam.us/CA/{fsa}")
+        except httpx.HTTPError:
+            raise HTTPException(status_code=503, detail="Couldn't check coverage right now — just call or text me instead.")
+        if r.status_code == 404:
+            raise HTTPException(status_code=404, detail="Couldn't find that postal code — double-check it, or just call or text me.")
+        if r.status_code != 200:
+            raise HTTPException(status_code=503, detail="Couldn't check coverage right now — just call or text me instead.")
+        place_data = r.json()["places"][0]
+        lat, lng, place = float(place_data["latitude"]), float(place_data["longitude"]), place_data["place name"]
+        await db.fsa_cache.update_one({"fsa": fsa}, {"$set": {"fsa": fsa, "lat": lat, "lng": lng, "place": place}}, upsert=True)
+    dist = _corridor_distance_km(lat, lng)
+    return {"postal_code": fsa, "place": place, "distance_km": round(dist, 1), "in_area": dist <= SERVICE_RADIUS_KM}
 
 
 # ---------- Booking routes ----------
