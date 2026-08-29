@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { Loader2, SendHorizonal, CheckCircle2 } from "lucide-react";
 import { Reveal, SectionLabel } from "./Reveal";
-import { BUSINESS, SERVICES } from "../../lib/site-data";
+import { BUSINESS, SERVICES, SERVICE_EXCLUSIONS } from "../../lib/site-data";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -121,6 +121,18 @@ export const BookingForm = () => {
                 ))}
               </div>
             </Reveal>
+            <Reveal delay={0.25}>
+              <div className="mt-10 border-t border-white/10 pt-8" data-testid="booking-exclusions">
+                <p className={labelCls}>Good to know</p>
+                <ul className="space-y-2">
+                  {SERVICE_EXCLUSIONS.map((line) => (
+                    <li key={line} className="text-zinc-500 text-xs leading-relaxed">
+                      {line}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
           </div>
 
           <div className="col-span-12 md:col-span-7">
@@ -168,7 +180,7 @@ export const BookingForm = () => {
                     <div>
                       <label className={labelCls} htmlFor="bk-device">Device *</label>
                       <select id="bk-device" data-testid="booking-device-select" value={form.device_type} onChange={set("device_type")} className={inputCls}>
-                        {["Laptop", "Desktop PC", "Custom build", "Mac", "Phone / Tablet", "Network gear", "Other"].map((d) => (
+                        {["Laptop", "Desktop PC", "Mac", "Phone / Tablet", "Network gear", "Other"].map((d) => (
                           <option key={d} value={d}>{d}</option>
                         ))}
                       </select>

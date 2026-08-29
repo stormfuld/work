@@ -307,23 +307,42 @@ async def remove_blocked_day(date: str, user: dict = Depends(get_current_user)):
 
 # ---------- Service area ----------
 
-CORRIDOR_A = (47.3614, -68.3218)  # Edmundston
-CORRIDOR_B = (47.0520, -67.7368)  # Grand Falls
-SERVICE_RADIUS_KM = 20
+ORIGIN = (47.3614, -68.3218)  # Edmundston — base of operations
+GRAND_FALLS = (47.0520, -67.7368)
+MAX_DRIVE_MINUTES = 90
+
+# Fallback-only: rough avg speed used to estimate drive time if the routing
+# service is unreachable (straight-line km / this speed). Not used when OSRM succeeds.
+FALLBACK_AVG_SPEED_KMH = 70
 
 
-def _corridor_distance_km(lat: float, lng: float) -> float:
-    ref = math.radians((CORRIDOR_A[0] + CORRIDOR_B[0]) / 2)
-
+def _straight_line_km(lat: float, lng: float) -> float:
+    ref = math.radians(ORIGIN[0])
     def xy(point):
         return (point[1] * 111.320 * math.cos(ref), point[0] * 110.574)
-
-    ax, ay = xy(CORRIDOR_A)
-    bx, by = xy(CORRIDOR_B)
+    ox, oy = xy(ORIGIN)
     px, py = xy((lat, lng))
-    dx, dy = bx - ax, by - ay
-    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
-    return math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+    return math.hypot(px - ox, py - oy)
+
+
+async def _driving_minutes(lat: float, lng: float) -> tuple[float, bool]:
+    """Returns (minutes, is_real_routing). Tries OSRM; falls back to a straight-line estimate."""
+    try:
+        url = (
+            f"https://router.project-osrm.org/route/v1/driving/"
+            f"{ORIGIN[1]},{ORIGIN[0]};{lng},{lat}?overview=false"
+        )
+        async with httpx.AsyncClient(timeout=8) as c:
+            r = await c.get(url)
+        if r.status_code == 200:
+            data = r.json()
+            if data.get("code") == "Ok" and data.get("routes"):
+                return data["routes"][0]["duration"] / 60, True
+    except httpx.HTTPError:
+        pass
+    # Fallback: straight-line distance / assumed avg speed
+    km = _straight_line_km(lat, lng)
+    return (km / FALLBACK_AVG_SPEED_KMH) * 60, False
 
 
 @api_router.get("/service-area")
@@ -333,23 +352,36 @@ async def service_area(postal_code: str):
         raise HTTPException(status_code=400, detail="Enter a valid Canadian postal code (e.g. E3V 1A1).")
     fsa = pc[:3]
     cached = await db.fsa_cache.find_one({"fsa": fsa})
-    if cached:
+    if cached and "drive_minutes" in cached:
         lat, lng, place = cached["lat"], cached["lng"], cached["place"]
+        minutes = cached["drive_minutes"]
     else:
-        try:
-            async with httpx.AsyncClient(timeout=10) as c:
-                r = await c.get(f"https://api.zippopotam.us/CA/{fsa}")
-        except httpx.HTTPError:
-            raise HTTPException(status_code=503, detail="Couldn't check coverage right now — just call or text me instead.")
-        if r.status_code == 404:
-            raise HTTPException(status_code=404, detail="Couldn't find that postal code — double-check it, or just call or text me.")
-        if r.status_code != 200:
-            raise HTTPException(status_code=503, detail="Couldn't check coverage right now — just call or text me instead.")
-        place_data = r.json()["places"][0]
-        lat, lng, place = float(place_data["latitude"]), float(place_data["longitude"]), place_data["place name"]
-        await db.fsa_cache.update_one({"fsa": fsa}, {"$set": {"fsa": fsa, "lat": lat, "lng": lng, "place": place}}, upsert=True)
-    dist = _corridor_distance_km(lat, lng)
-    return {"postal_code": fsa, "place": place, "distance_km": round(dist, 1), "in_area": dist <= SERVICE_RADIUS_KM}
+        if cached:
+            lat, lng, place = cached["lat"], cached["lng"], cached["place"]
+        else:
+            try:
+                async with httpx.AsyncClient(timeout=10) as c:
+                    r = await c.get(f"https://api.zippopotam.us/CA/{fsa}")
+            except httpx.HTTPError:
+                raise HTTPException(status_code=503, detail="Couldn't check coverage right now — just call or text me instead.")
+            if r.status_code == 404:
+                raise HTTPException(status_code=404, detail="Couldn't find that postal code — double-check it, or just call or text me.")
+            if r.status_code != 200:
+                raise HTTPException(status_code=503, detail="Couldn't check coverage right now — just call or text me instead.")
+            place_data = r.json()["places"][0]
+            lat, lng, place = float(place_data["latitude"]), float(place_data["longitude"]), place_data["place name"]
+        minutes, _real = await _driving_minutes(lat, lng)
+        await db.fsa_cache.update_one(
+            {"fsa": fsa},
+            {"$set": {"fsa": fsa, "lat": lat, "lng": lng, "place": place, "drive_minutes": minutes}},
+            upsert=True,
+        )
+    return {
+        "postal_code": fsa,
+        "place": place,
+        "drive_minutes": round(minutes),
+        "in_area": minutes <= MAX_DRIVE_MINUTES,
+    }
 
 
 # ---------- Booking routes ----------

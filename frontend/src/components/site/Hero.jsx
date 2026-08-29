@@ -40,8 +40,8 @@ export const Hero = () => {
         <div className="mt-12 flex flex-col md:flex-row md:items-end justify-between gap-10">
           <MaskedLine delay={1.05}>
             <p className="text-zinc-400 text-base md:text-lg max-w-md leading-relaxed" data-testid="hero-subtitle">
-              Repair, recovery and upgrades with bench-level precision.
-              Fixed quotes, same-day diagnostics, 90-day warranty on every fix.
+              Hardware and OS diagnostics, malware removal, and account or
+              software setup — fixed quotes, same-day diagnostics, 90-day warranty on every fix.
             </p>
           </MaskedLine>
 

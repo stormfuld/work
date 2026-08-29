@@ -48,9 +48,9 @@ export const ServiceArea = () => {
             </Reveal>
             <Reveal delay={0.1}>
               <p className="text-zinc-400 text-base md:text-lg leading-relaxed" data-testid="coverage-subtitle">
-                I drive the corridor between Edmundston and Grand Falls — and up
-                to 20 km off the route. Punch in your postal code to check
-                whether I come to you.
+                I'm based in Edmundston and drive up to 1.5 hours out — covering
+                Edmundston and the surrounding area, all the way to Grand Falls
+                and beyond. Punch in your postal code to check whether I come to you.
               </p>
             </Reveal>
           </div>
@@ -92,9 +92,9 @@ export const ServiceArea = () => {
                       <p className="font-display font-bold uppercase text-lg text-zinc-100">You're covered.</p>
                     </div>
                     <p className="text-sm text-zinc-300 leading-relaxed mb-6">
-                      {result.distance_km < 1
-                        ? `${result.place} is right on my route between Edmundston and Grand Falls.`
-                        : `${result.place} is about ${result.distance_km} km from my Edmundston–Grand Falls run.`}{" "}
+                      {result.drive_minutes <= 5
+                        ? `${result.place} is right around the corner from Edmundston.`
+                        : `${result.place} is about ${result.drive_minutes} min from Edmundston.`}{" "}
                       I come to you, no drop-off needed.
                     </p>
                     <button
@@ -111,12 +111,13 @@ export const ServiceArea = () => {
                   <div className="mt-8 border border-amber-400/40 rounded-sm p-6 md:p-8 bg-amber-400/5" data-testid="coverage-result-out">
                     <div className="flex items-center gap-3 mb-3">
                       <AlertTriangle size={20} className="text-amber-400" />
-                      <p className="font-display font-bold uppercase text-lg text-zinc-100">Outside my usual run.</p>
+                      <p className="font-display font-bold uppercase text-lg text-zinc-100">Too far for a house call.</p>
                     </div>
                     <p className="text-sm text-zinc-300 leading-relaxed mb-6">
-                      {result.place} is roughly {result.distance_km} km off my
-                      Edmundston–Grand Falls route. Get in touch anyway — for the
-                      right job I'll make the trip, or we can sort it remotely.
+                      {result.place} is roughly {result.drive_minutes} min from
+                      Edmundston — outside my usual 1.5 hour range. Get in touch
+                      anyway — for the right job I'll make the trip, or we can
+                      sort it remotely.
                     </p>
                     <div className="flex flex-wrap gap-3">
                       <a

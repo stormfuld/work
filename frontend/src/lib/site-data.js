@@ -21,10 +21,10 @@ export const IMAGES = {
 
 export const SERVICES = [
   {
-    id: "general-repair",
+    id: "hardware-diagnostics",
     num: "S/01",
-    title: "General Repair",
-    desc: "Cracked screens, dead batteries, failing drives, broken ports. Hardware faults diagnosed and fixed with OEM-grade parts.",
+    title: "Hardware & OS Diagnostics",
+    desc: "Slow charging, dead batteries, failing drives, broken ports, screen tearing (GPU-related) and other hardware or OS faults — diagnosed and fixed on-site.",
     span: "md:col-span-8",
     image: IMAGES.rig,
   },
@@ -32,34 +32,48 @@ export const SERVICES = [
     id: "virus-removal",
     num: "S/02",
     title: "Virus & Malware Removal",
-    desc: "Deep-clean eradication of malware, ransomware triage, browser hijacks and rootkits — plus hardening so it doesn't come back.",
+    desc: "Deep-clean eradication of malware, ransomware, browser hijacks and rootkits — plus hardening so it doesn't come back.",
     span: "md:col-span-4",
     image: null,
   },
   {
-    id: "upgrades",
+    id: "setup",
     num: "S/03",
-    title: "Upgrades & Custom Builds",
-    desc: "SSD swaps, RAM boosts, GPU installs and full custom rigs specced to your workload and budget.",
+    title: "Program & OS Setup",
+    desc: "New machine setup, OS installs and reinstalls, software configuration — get everything running the way you need it.",
     span: "md:col-span-4",
     image: null,
   },
   {
-    id: "networking",
+    id: "account-help",
     num: "S/04",
-    title: "Home & Small Office Networking",
-    desc: "Wi-Fi dead zones eliminated. Mesh setups, router config, NAS and printer sharing that just works.",
+    title: "Account Help",
+    desc: "Locked out or having trouble with Apple ID, Gmail, Microsoft or other accounts? I'll help you regain access and get set up properly.",
     span: "md:col-span-8",
     image: IMAGES.circuit,
   },
   {
-    id: "data-recovery",
+    id: "networking",
     num: "S/05",
-    title: "Data Recovery & Backup",
-    desc: "Failed drives, deleted files, corrupted partitions. Recovery-first approach, then a bulletproof backup plan.",
-    span: "md:col-span-12",
+    title: "Home & Small Office Networking",
+    desc: "Wi-Fi dead zones eliminated. Mesh setups, router config, NAS and printer sharing that just works.",
+    span: "md:col-span-6",
     image: null,
   },
+  {
+    id: "data-recovery",
+    num: "S/06",
+    title: "Data Recovery & Backup",
+    desc: "Failed drives, deleted files, corrupted partitions. Recovery-first approach, then a bulletproof backup plan.",
+    span: "md:col-span-6",
+    image: null,
+  },
+];
+
+export const SERVICE_EXCLUSIONS = [
+  "Cracked screens are not repaired (screen tearing from GPU issues is).",
+  "Liquid damage isn't serviced — I'll point you to another technician or advise on replacement depending on severity.",
+  "Custom PC builds are quoted separately — reach out directly by phone or email to discuss a build.",
 ];
 
 export const PRICING = [
@@ -77,7 +91,7 @@ export const PRICING = [
     name: "Standard Repair",
     price: "$99",
     unit: "from",
-    desc: "Most common fixes: screens, batteries, malware, OS rebuilds, tune-ups.",
+    desc: "Most common fixes: charging issues, batteries, malware, OS rebuilds, account help, tune-ups.",
     features: ["Parts at cost", "90-day warranty", "Free re-check within 7 days", "Remote or on-site"],
     featured: true,
   },
@@ -86,7 +100,7 @@ export const PRICING = [
     name: "Full Restoration",
     price: "$189",
     unit: "from",
-    desc: "Data recovery, liquid damage, board-level work and full custom builds.",
+    desc: "Data recovery, board-level work and more involved diagnostics.",
     features: ["Priority queue", "Board-level repair", "Recovery-first protocol", "1-year workmanship cover"],
     featured: false,
   },
@@ -116,10 +130,10 @@ export const PROCESS = [
 ];
 
 export const MARQUEE_ITEMS = [
-  "LOGIC BOARD REPAIR",
+  "HARDWARE DIAGNOSTICS",
   "DATA RECOVERY",
-  "THERMAL PASTE RENEWAL",
-  "VIRUS ERADICATION",
-  "CUSTOM BUILDS",
-  "SSD UPGRADES",
+  "MALWARE REMOVAL",
+  "ACCOUNT RECOVERY",
+  "OS & PROGRAM SETUP",
+  "CUSTOM BUILDS BY QUOTE",
 ];

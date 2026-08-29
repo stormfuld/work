@@ -46,6 +46,19 @@
 - frontend/src/context/AuthContext.jsx, pages/AdminPage.jsx, components/admin/{AdminLogin,AdminDashboard,BookingCard,AvailabilityPanel}.jsx
 - auth playbook tests: /app/auth_testing.md; backend tests: /app/backend/tests/backend_test.py
 
+### 2026-08-29 (Service Scope Update)
+- SERVICES rewritten to match actual offering: Hardware & OS Diagnostics (charging, batteries, drives, ports, screen tearing — no cracked screens), Virus & Malware Removal, Program & OS Setup, Account Help (Apple/Gmail/Microsoft etc.), Networking, Data Recovery & Backup
+- Removed "Upgrades & Custom Builds" from the on-site quote flow — custom PC builds are now a separate off-form quote (contact directly); "Custom build" removed from booking form device options
+- Added SERVICE_EXCLUSIONS list (no cracked screens, no liquid damage — refer out, custom builds by quote) surfaced on the booking form next to contact info
+- Hero subtitle and pricing tier copy updated to drop cracked-screen/liquid-damage/upgrade language
+
+### 2026-08-29 pt.2 (Service Area → Drive-Time Based)
+- Replaced straight-line corridor/20km-radius logic with real driving time from Edmundston via OSRM public routing API (router.project-osrm.org); in_area = ≤90 min drive from Edmundston (MAX_DRIVE_MINUTES in server.py)
+- Straight-line-distance fallback (assumed 70 km/h avg) kicks in only if OSRM is unreachable, so the checker never hard-fails
+- fsa_cache now stores drive_minutes alongside lat/lng/place; existing cached entries auto-backfill on next lookup
+- Frontend copy updated to talk in drive-time ("about 45 min from Edmundston" / "outside my usual 1.5 hour range") instead of km
+- Caveat: OSRM's public demo server has no SLA/rate-limit guarantee — fine for this traffic level, but worth swapping to a paid routing API (e.g. Google Distance Matrix) if this ever needs to be bulletproof
+
 ## Backlog
 - P0: Business name + business email pending from user → then swap brand in site-data.js and OWNER_EMAIL/EMAIL_REPLY_TO in backend/.env (alerts currently go to delivered@resend.dev test inbox by user's choice)
 - P2: Testimonials wall, FAQ, service-area map, real photos
